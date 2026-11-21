@@ -1,0 +1,14 @@
+// Integration verification for the Karkain-API public API.
+import api
+
+func main() {
+    let contract = new_api()
+    contract = add_endpoint(contract, "list", "GET", "/items", 200)
+    contract = add_endpoint(contract, "create", "POST", "/items", 201)
+
+    assert_eq(endpoint_count(contract), 2)
+    assert_eq(validate_contract(contract), 0)
+    assert_eq(endpoint_path(contract, "list"), "/items")
+    println(describe_endpoint(contract, "list"))
+    println(status_text(endpoint_status(contract, "create")))
+}

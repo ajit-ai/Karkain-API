@@ -1,0 +1,67 @@
+// Native tests for Karkain-API.
+
+func sample_api() {
+    let a = add_endpoint(new_api(), "get_user", "GET", "/users/{id}", 200)
+    return add_endpoint(a, "create_user", "POST", "/users", 201)
+}
+
+func test_new_api() {
+    assert_eq(endpoint_count(new_api()), 0)
+    assert(has_endpoint(new_api(), "x") == false)
+}
+
+func test_add_and_count() {
+    let a = sample_api()
+    assert_eq(endpoint_count(a), 2)
+    assert(has_endpoint(a, "get_user"))
+}
+
+func test_endpoint_fields() {
+    let a = sample_api()
+    assert_eq(endpoint_method(a, "get_user"), "GET")
+    assert_eq(endpoint_path(a, "get_user"), "/users/{id}")
+    assert_eq(endpoint_status(a, "create_user"), 201)
+}
+
+func test_missing_endpoint_fields() {
+    let a = new_api()
+    assert_eq(endpoint_method(a, "x"), "")
+    assert_eq(endpoint_path(a, "x"), "")
+    assert_eq(endpoint_status(a, "x"), 0)
+}
+
+func test_add_replaces() {
+    let a = add_endpoint(sample_api(), "get_user", "PUT", "/u", 204)
+    assert_eq(endpoint_count(a), 2)
+    assert_eq(endpoint_method(a, "get_user"), "PUT")
+    assert_eq(endpoint_status(a, "get_user"), 204)
+}
+
+func test_remove_endpoint() {
+    let a = remove_endpoint(sample_api(), "get_user")
+    assert_eq(endpoint_count(a), 1)
+    assert(has_endpoint(a, "get_user") == false)
+    assert(has_endpoint(a, "create_user"))
+}
+
+func test_status_text() {
+    assert_eq(status_text(200), "OK")
+    assert_eq(status_text(201), "Created")
+    assert_eq(status_text(404), "Not Found")
+    assert_eq(status_text(999), "Unknown")
+}
+
+func test_validate_contract_ok() {
+    assert_eq(validate_contract(sample_api()), 0)
+}
+
+func test_validate_contract_bad() {
+    let a = add_endpoint(new_api(), "bad", "", "", 200)
+    assert_eq(validate_contract(a), 1)
+}
+
+func test_describe_endpoint() {
+    let a = sample_api()
+    assert_eq(describe_endpoint(a, "get_user"), "get_user -> GET /users/{id} (200)")
+    assert_eq(describe_endpoint(a, "none"), "none -> <missing>")
+}

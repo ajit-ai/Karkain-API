@@ -1,0 +1,7 @@
+name = "karkain-api"
+version = "0.1.0-dev"
+description = "Endpoint contracts and API development primitives for Karkain v1.2.0"
+license = "MIT"
+targets = ["native"]
+
+[dependencies]

@@ -1,0 +1,13 @@
+// Karkain-API runnable example: declare and validate an endpoint contract.
+import api
+
+func main() {
+    let contract = new_api()
+    contract = add_endpoint(contract, "list_items", "GET", "/items", 200)
+    contract = add_endpoint(contract, "add_item", "POST", "/items", 201)
+
+    println(describe_endpoint(contract, "list_items"))
+    println(describe_endpoint(contract, "add_item"))
+    println("endpoints=" + str(endpoint_count(contract)))
+    println("problems=" + str(validate_contract(contract)))
+}

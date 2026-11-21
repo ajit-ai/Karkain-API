@@ -1,0 +1,136 @@
+// Karkain-API - endpoint contracts and API development primitives.
+// Karkain Language v1.2.0 verified baseline (tag v1.2.0,
+// commit 77d70693e1e3134dac312a303bffafa7d50fa988).
+//
+// Scope boundary: this framework describes endpoint contracts and
+// validates them before a host binds them to a transport. It does not
+// implement an HTTP server or duplicate Karkain-Web's router.
+//
+// Representation: an API is a flat array of quadruples
+//   [name, method, path, status_code, ...]
+// Arrays are values; mutating functions return the updated API.
+
+// new_api returns an empty contract.
+public func new_api() {
+    return []
+}
+
+// add_endpoint registers or replaces a named endpoint contract.
+public func add_endpoint(api, name, method, path, status_code) {
+    let out = remove_endpoint(api, name)
+    out = push(out, name)
+    out = push(out, method)
+    out = push(out, path)
+    out = push(out, status_code)
+    return out
+}
+
+// remove_endpoint deletes a named endpoint.
+public func remove_endpoint(api, name) {
+    let out = []
+    let i = 0
+    while (i < len(api)) {
+        if api[i] == name {
+            i = i + 4
+        } else {
+            out = push(out, api[i])
+            out = push(out, api[i + 1])
+            out = push(out, api[i + 2])
+            out = push(out, api[i + 3])
+            i = i + 4
+        }
+    }
+    return out
+}
+
+// endpoint_count returns the number of declared endpoints.
+public func endpoint_count(api) {
+    return len(api) / 4
+}
+
+// has_endpoint reports whether a named endpoint exists.
+public func has_endpoint(api, name) {
+    let i = 0
+    while (i < len(api)) {
+        if api[i] == name {
+            return true
+        }
+        i = i + 4
+    }
+    return false
+}
+
+// endpoint_method returns the HTTP method of a named endpoint.
+public func endpoint_method(api, name) {
+    let i = 0
+    while (i < len(api)) {
+        if api[i] == name {
+            return api[i + 1]
+        }
+        i = i + 4
+    }
+    return ""
+}
+
+// endpoint_path returns the path of a named endpoint.
+public func endpoint_path(api, name) {
+    let i = 0
+    while (i < len(api)) {
+        if api[i] == name {
+            return api[i + 2]
+        }
+        i = i + 4
+    }
+    return ""
+}
+
+// endpoint_status returns the declared success status code.
+public func endpoint_status(api, name) {
+    let i = 0
+    while (i < len(api)) {
+        if api[i] == name {
+            return api[i + 3]
+        }
+        i = i + 4
+    }
+    return 0
+}
+
+// status_text maps common status codes to stable labels.
+public func status_text(code) {
+    if code == 200 { return "OK" }
+    if code == 201 { return "Created" }
+    if code == 204 { return "No Content" }
+    if code == 400 { return "Bad Request" }
+    if code == 401 { return "Unauthorized" }
+    if code == 403 { return "Forbidden" }
+    if code == 404 { return "Not Found" }
+    if code == 500 { return "Internal Server Error" }
+    return "Unknown"
+}
+
+// validate_contract counts endpoints with an empty path or an empty
+// method. A valid contract returns 0 problems.
+public func validate_contract(api) {
+    let problems = 0
+    let i = 0
+    while (i < len(api)) {
+        if api[i + 1] == "" {
+            problems = problems + 1
+        } else {
+            if api[i + 2] == "" {
+                problems = problems + 1
+            }
+        }
+        i = i + 4
+    }
+    return problems
+}
+
+// describe_endpoint builds a one-line endpoint diagnostic.
+public func describe_endpoint(api, name) {
+    if has_endpoint(api, name) == false {
+        return name + " -> <missing>"
+    }
+    return name + " -> " + endpoint_method(api, name) + " " + endpoint_path(api, name) + " (" + str(endpoint_status(api, name)) + ")"
+}
