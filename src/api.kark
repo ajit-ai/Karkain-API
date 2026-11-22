@@ -134,3 +134,129 @@ public func describe_endpoint(api, name) {
     }
     return name + " -> " + endpoint_method(api, name) + " " + endpoint_path(api, name) + " (" + str(endpoint_status(api, name)) + ")"
 }
+
+// ---------------------------------------------------------------------------
+// Phase 2 additions. Phase 1 endpoint API is unchanged.
+
+// api_version builds a stable version label.
+public func api_version(major, minor) {
+    return "v" + str(major) + "." + str(minor)
+}
+
+// version_compatible compares equal-format version labels.
+public func version_compatible(current, required) {
+    return current >= required
+}
+
+// new_bindings creates an empty parameter binding store.
+public func new_bindings() {
+    return []
+}
+
+// add_binding declares that an endpoint parameter comes from a source.
+public func add_binding(bindings, endpoint, parameter, source) {
+    let out = bindings
+    out = push(out, endpoint)
+    out = push(out, parameter)
+    out = push(out, source)
+    return out
+}
+
+// binding_count returns the number of declared bindings.
+public func binding_count(bindings) {
+    return len(bindings) / 3
+}
+
+// binding_source returns the source of an endpoint parameter or "".
+public func binding_source(bindings, endpoint, parameter) {
+    let i = 0
+    while (i < len(bindings)) {
+        if bindings[i] == endpoint {
+            if bindings[i + 1] == parameter {
+                return bindings[i + 2]
+            }
+        }
+        i = i + 3
+    }
+    return ""
+}
+
+// pagination returns [offset, limit] for a page and size.
+public func pagination(page, size) {
+    let p = page
+    let s = size
+    if p < 1 { p = 1 }
+    if s < 1 { s = 1 }
+    let out = []
+    out = push(out, (p - 1) * s)
+    out = push(out, s)
+    return out
+}
+
+// matches_filter reports whether a value contains a filter substring.
+public func matches_filter(value, filter) {
+    if len(filter) == 0 { return true }
+    return contains(value, filter)
+}
+
+// api_error builds a standard API error triple.
+public func api_error(code, message) {
+    let e = []
+    e = push(e, code)
+    e = push(e, message)
+    e = push(e, "error")
+    return e
+}
+
+// error_code returns an API error code.
+public func error_code(err) { return err[0] }
+
+// error_message returns an API error message.
+public func error_message(err) { return err[1] }
+
+// new_auth_contract creates an empty authorization requirement store.
+public func new_auth_contract() {
+    return []
+}
+
+// require_auth marks an endpoint as requiring a role.
+public func require_auth(contract, endpoint, role) {
+    let out = contract
+    out = push(out, endpoint)
+    out = push(out, role)
+    return out
+}
+
+// auth_role returns the required role or "".
+public func auth_role(contract, endpoint) {
+    let i = 0
+    while (i < len(contract)) {
+        if contract[i] == endpoint { return contract[i + 1] }
+        i = i + 2
+    }
+    return ""
+}
+
+// rate_exceeded reports whether a count exceeds a configured limit.
+public func rate_exceeded(limit, count) {
+    if limit < 1 { return true }
+    return count > limit
+}
+
+// contract_compatible reports whether two APIs share the same endpoint
+// method/path pairs. Extra endpoints in b are ignored.
+public func contract_compatible(a, b) {
+    let i = 0
+    while (i < len(a)) {
+        if has_endpoint(b, a[i]) == false { return false }
+        if endpoint_method(b, a[i]) != a[i + 1] { return false }
+        if endpoint_path(b, a[i]) != a[i + 2] { return false }
+        i = i + 4
+    }
+    return true
+}
+
+// api_summary builds a one-line API diagnostic.
+public func api_summary(api, version) {
+    return version + ":endpoints=" + str(endpoint_count(api))
+}

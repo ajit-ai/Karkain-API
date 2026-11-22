@@ -65,3 +65,74 @@ func test_describe_endpoint() {
     assert_eq(describe_endpoint(a, "get_user"), "get_user -> GET /users/{id} (200)")
     assert_eq(describe_endpoint(a, "none"), "none -> <missing>")
 }
+
+// --- Phase 2 regression ---
+
+func test_phase1_regression() {
+    let a = sample_api()
+    assert_eq(endpoint_count(a), 2)
+    assert_eq(endpoint_method(a, "get_user"), "GET")
+    assert_eq(endpoint_path(a, "create_user"), "/users")
+    assert_eq(validate_contract(a), 0)
+}
+
+// --- Phase 2 additions ---
+
+func test_api_version() {
+    assert_eq(api_version(1, 2), "v1.2")
+    assert(version_compatible("v1.2", "v1.1"))
+    assert(version_compatible("v1.0", "v1.1") == false)
+}
+
+func test_bindings() {
+    let b = add_binding(add_binding(new_bindings(), "get_user", "id", "path"), "get_user", "token", "header")
+    assert_eq(binding_count(b), 2)
+    assert_eq(binding_source(b, "get_user", "id"), "path")
+    assert_eq(binding_source(b, "get_user", "missing"), "")
+}
+
+func test_pagination() {
+    let p = pagination(3, 10)
+    assert_eq(p[0], 20)
+    assert_eq(p[1], 10)
+    let clamped = pagination(0, 0)
+    assert_eq(clamped[0], 0)
+    assert_eq(clamped[1], 1)
+}
+
+func test_filtering() {
+    assert(matches_filter("hello world", "world"))
+    assert(matches_filter("hello", ""))
+    assert(matches_filter("hello", "xyz") == false)
+}
+
+func test_api_error() {
+    let e = api_error(404, "not found")
+    assert_eq(error_code(e), 404)
+    assert_eq(error_message(e), "not found")
+    assert_eq(e[2], "error")
+}
+
+func test_auth_contract() {
+    let c = require_auth(require_auth(new_auth_contract(), "get_user", "reader"), "create_user", "admin")
+    assert_eq(auth_role(c, "get_user"), "reader")
+    assert_eq(auth_role(c, "create_user"), "admin")
+    assert_eq(auth_role(c, "none"), "")
+}
+
+func test_rate_limit() {
+    assert(rate_exceeded(10, 10) == false)
+    assert(rate_exceeded(10, 11))
+    assert(rate_exceeded(0, 0))
+}
+
+func test_contract_compatible() {
+    let a = sample_api()
+    assert(contract_compatible(a, a))
+    let reduced = add_endpoint(new_api(), "get_user", "GET", "/users/{id}", 200)
+    assert(contract_compatible(a, reduced) == false)
+}
+
+func test_api_summary() {
+    assert_eq(api_summary(sample_api(), "v1.0"), "v1.0:endpoints=2")
+}

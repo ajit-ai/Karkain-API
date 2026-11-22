@@ -1,0 +1,15 @@
+// Karkain-API Phase 2 example: versions, bindings, auth and paging.
+import api
+
+func main() {
+    let contract = add_endpoint(new_api(), "list_items", "GET", "/items", 200)
+    let bindings = add_binding(new_bindings(), "list_items", "limit", "query")
+    let auth = require_auth(new_auth_contract(), "list_items", "reader")
+
+    let p = pagination(2, 5)
+    println(api_summary(contract, api_version(1, 0)))
+    println("source=" + binding_source(bindings, "list_items", "limit"))
+    println("role=" + auth_role(auth, "list_items"))
+    println("offset=" + str(p[0]))
+    println("limit_exceeded=" + str(rate_exceeded(100, 101)))
+}
